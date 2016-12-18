@@ -347,16 +347,7 @@
 
     <script type="text/javascript">
         /* GLOBAL VARAIABLES */
-        var g_LocationOfFirstDayOfTodaysMonth = {
-            'row': 1,   // will always be 1
-            'col': 0
-        };
-        var g_LocationOfLastDayOfTodaysMonth = {
-            'row': 0,
-            'col': 0
-        }
-        var g_DisplayedYear = 0;
-        var g_DisplayedMonth = 0;
+        var d = new Date();
 
         var g_DaysOfTheWeek = [
             'Sunday', 'Monday', 'Tuesday',
@@ -371,632 +362,78 @@
             'October', 'November', 'December'
         ];
 
-        var d = new Date();
         var g_DaysPerMonth_CurrYear = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
         if(d.getFullYear() % 4 === 0)
             g_DaysPerMonth_CurrYear[1] = 29;
 
-        $(document).ready(function() {
+        var g_DaysOfTheWeek = [
+            'Sunday', 'Monday', 'Tuesday',
+            'Wednesday', 'Thursday', 'Friday', 'Saturday'
+        ];
 
-            // must be manually updated yearly
-            var firstDayOfTheYear = {
-                'dayOfTheWeek': 'Friday',
-                'n_ScrapDays': 2, // because dayOfTheWeek = Friday
-                'year': 2016,
-                'month': 0, // 0 -> January
-                'day': 1
-            };
+        var g_MonthsOfTheYear = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
 
-            var today = {
-                'n_DaysFromTheFirst': -1,   // use '-1' as a flag
-                'dayOfTheWeek': d.getDay() + 1, // +1 bc range is [0,6]
-                'year': d.getFullYear(),
-                'month': d.getMonth(),
-                'day': d.getDate()
-            };
+        var g_ReferenceObj = {
+            'day': 1,
+            'month': 0,
+            'year': 1970,//2016,
+            'dayOfTheWeek': 'Thursday',//'Friday',
+            'loc_FirstDay': {
+                'r': 1, 'c': 5//6
+            },
+            'loc_LastDay': {
+                'r': 5, 'c': 7//6, 'c': 1
+            },
+            'offset': 3//2
+        };
 
-            $('.header-day-of-the-week').html(g_DaysOfTheWeek[d.getDay()] + ',');
-            $('.header-month').html(g_MonthsOfTheYear[d.getMonth()]);
-            $('.header-day-number').html(d.getDate() + ',');
-            $('.header-year').html(d.getFullYear());
+        var today = {
+            'day': d.getDate(),
+            'month': d.getMonth(),
+            'year': d.getFullYear(),
+            'dayOfTheWeek': d.getDay() + 1, // +1 bc range is [0,6]
+        };
 
-            var d_FirstDay = new Date(Date.UTC(firstDayOfTheYear.year, firstDayOfTheYear.month, firstDayOfTheYear.day));
+        /////////////////////////// TEST ///////////////////////////
+        // Status: Failing with current test
+        // var today = {
+        //     'day': 1,
+        //     'month': 0,
+        //     'year': 2017,
+        //     'dayOfTheWeek': d.getDay() + 1, // +1 bc range is [0,6]
+        // };
+        ///////////////////////////////////////////////////////////
 
-            var d_Today = new Date(today.year, today.month, today.day);
-            today.n_DaysFromTheFirst = Math.floor(daysBetween(d_FirstDay, d_Today) + 1); // +1 bc it is the nth day - ex below
-            // Example:
-            //      28 - 1 = 27 days in between.
-            //      But we want the day number, which is 28th.
-
-            console.log("d_Today:", d_Today);
-            console.log("# of Days since First:", today.n_DaysFromTheFirst-1);
-            console.log("Day Number", today.n_DaysFromTheFirst);
-
-            /*
-                At This Point, the Known:
-                    - Total number of days in this Year
-                    - The day number relative to 01/01/2016
-                    - Number of scrap days, 2, for 2016
-            */
-
-            var x = today.n_DaysFromTheFirst - firstDayOfTheYear.n_ScrapDays; // make the year's week begin on a Sunday
-            var n_DaysInAWeek = 7;
-            var n_Weeks = Math.floor(x / n_DaysInAWeek);
-            var n_DaysIntoTheWeek = x % n_DaysInAWeek;
-
-            console.log("Number of Weeks Completed: " + n_Weeks + " r" + n_DaysIntoTheWeek);
-
-            // check to see if 'n_ScrapDays' !== 7 || 'n_DaysIntoTheWeek' === 0
-            if(n_DaysIntoTheWeek !== 0) {
-                ++n_Weeks; // 01-01-XXXX is always as a whole week
+        var g_CurrMonthObj = {
+            'month': -1,
+            'year': -1,
+            'loc_FirstDay': {
+                'r': -1, 'c': -1
+            },
+            'loc_TargetDay': {
+                'r': -1, 'c': -1
+            },
+            'loc_LastDay': {
+                'r': -1, 'c': -1
+            },
+            'previousMonth': {
+                'lastDay': -1,
+                'month': -1,
+                'year': -1,
+                'loc_LastDay': {
+                    'r': -1, 'c': -1
+                }
             }
-
-            console.log("Week Number: " + n_Weeks);
-
-            /*
-                At This Point, the Known:
-                    - The week number relative to the year
-                    - Verified how far into the week we are
-                        > if n_DaysIntoTheWeek !== d.getDate() then ERR
-            */
-
-            var firstDayOfCurrMonth = SumDaysWithinMonths(g_DaysPerMonth_CurrYear, firstDayOfTheYear.month, today.month) + 1; // +1 for 1st of month
-            console.log('first day of current month:', firstDayOfCurrMonth);
-            var firstDayOfCurrMonth = firstDayOfCurrMonth - firstDayOfTheYear.n_ScrapDays; // accounts for "1st week of the year" which is not always 7 days long - in 2016 it's only 2 days long.
-            console.log('first day of current month rel. to first sunday of the year:', firstDayOfCurrMonth);
-
-            /*
-                At This Point, the Known:
-                    - Days between 01/01/20YY and mm/01/20YY
-                        > where 'mm' is the current month number
-            */
-
-            var dayOfTheWeekCurrMonthInits = firstDayOfCurrMonth % n_DaysInAWeek;
-            if(dayOfTheWeekCurrMonthInits === 0) { dayOfTheWeekCurrMonthInits = 7; }
-            console.log('dayOfTheWeekCurrMonthInits:', dayOfTheWeekCurrMonthInits);
-
-            /*
-                At this Point, the Known:
-                    - the first week of the current month is always week 1
-                    - the column number of the first day of the current month
-                        > which means I know what day of the week
-                        > Example: 12/01/16 has coordinates (1, 5)
-                                    Which is a Thursday, hence the 5
-            */
-
-            var n_ScrapDaysOfCurrentMonth = 8 - dayOfTheWeekCurrMonthInits;
-            var firstSundayOfCurrentMonth = n_ScrapDaysOfCurrentMonth + 1;
-            console.log('firstSundayOfCurrentMonth:', firstSundayOfCurrentMonth);
-            console.log('today.day:', today.day);
-
-            /*
-                At this Point, the Known:
-                    - what day number the first sunday occurs in current month
-                    - Example: 12/04/16 begins on the first Sunday - by 
-                               coincidence.
-            */
-
-            // calculate calendar location - only the row - for today's date 
-            // calculate all sundays of current month
-            // nth_Sunday is a means to check we don't overshoot the sunday, e.g. 32nd 
-            //                                                          day is a sunday
-            var nth_Sunday = 0;
-            var currWeekNumber_String = '';
-            // begin at two to simplify # of operations in conditions
-            var week_number = 2;
-            if(today.day < firstSundayOfCurrentMonth) {
-                currWeekNumber_String = 'week_1';
-            } else if(today.day < (firstSundayOfCurrentMonth + 7)) {
-                currWeekNumber_String = 'week_2';
-            } else if(today.day < (firstSundayOfCurrentMonth + (7 * ++week_number))) {
-                currWeekNumber_String = 'week_3';
-            } else if(today.day < (firstSundayOfCurrentMonth + (nth_Sunday = (7 * ++week_number))) && nth_Sunday <= g_DaysPerMonth_CurrYear[today.month]) {
-                currWeekNumber_String = 'week_4';
-            } else if(today.day < (firstSundayOfCurrentMonth + (nth_Sunday = (7 * ++week_number))) && nth_Sunday <= g_DaysPerMonth_CurrYear[today.month]) {
-                currWeekNumber_String = 'week_5';
-            } else if(today.day < (firstSundayOfCurrentMonth + (nth_Sunday = (7 * ++week_number))) && nth_Sunday <= g_DaysPerMonth_CurrYear[today.month]) {
-                currWeekNumber_String = 'week_6';
-            } else {
-                alert('Error displaying Calendar - try again later.');
-            }
-
-            ///////////////////////////////////////////////////////////////////
-            // LET THE JQUERY DOM MANIPULATION BEGIN
-
-            /*
-                Special Classes for UI:
-                    - current-day
-                    - next-month
-                    - previous-month
-                    - dayNumberOfMonth
-            */
-
-            var dot_String = '.';
-            var todaysCoordinate = dot_String + currWeekNumber_String + ' ' + dot_String + g_DaysOfTheWeek[today.dayOfTheWeek-1];
-            console.log('todaysCoordinate:', todaysCoordinate);
-            $(todaysCoordinate).addClass('current-day');
-            
-            var previousMonth = n_DaysInPreviousMonth(today.year, today.month, g_DaysPerMonth_CurrYear);
-            var nextMonth = n_DayInNextMonth(today.year, today.month, g_DaysPerMonth_CurrYear);
-
-            PopulateCalendar(parseInt(currWeekNumber_String.split('_')[1]), today.dayOfTheWeek, today.year, g_DaysPerMonth_CurrYear[today.month], today.day, previousMonth, nextMonth);
-
-            g_DisplayedYear = today.year;
-            g_DisplayedMonth = today.month;
-
-            console.log('g_LocationOfFirstDayOfTodaysMonth',g_LocationOfFirstDayOfTodaysMonth);
-            console.log('g_LocationOfLastDayOfTodaysMonth',g_LocationOfLastDayOfTodaysMonth);
-        });
-
-        ///////////////////////////////////////////////////////////////////////
-        /*
-            both functions below account for Daylight savings. Found on 
-            http://stackoverflow.com/a/11252167/3502494
-        */
-        function treatAsUTC(date) {
-            var result = new Date(date);
-            result.setMinutes(result.getMinutes() - result.getTimezoneOffset());
-            return result;
-        }
-
-        function daysBetween(startDate, endDate) {
-            var millisecondsPerDay = 24 * 60 * 60 * 1000;
-            return (treatAsUTC(endDate) - treatAsUTC(startDate)) / millisecondsPerDay;
-        }
-        ///////////////////////////////////////////////////////////////////////
-        function GetMonthString(index) {
-            return g_MonthsOfTheYear[index];
-        }
+        };
 
         /*
-            from (first day of month 'a') to (last day of month 'b')
+            Purpose: Removes any styling in the calendar display including the days 
+                     written in the month
         */
-        function SumDaysWithinMonths(monthsArr, a, b) {
-            var sum = 0;
-            for(var i = a; i < b; ++i) {
-                sum += monthsArr[i];
-            }
-            return sum;
-        }
-
-        /*
-            accounts for leap year
-            @currYear : current Year
-            @n_DaysInEachMonth : number of days in each month relative to this year
-            returns : number of days in previous month
-        */
-        function n_DaysInPreviousMonth(currYear, currMonth, n_DaysInEachMonth) {
-            var prevMonth = (currMonth - 1 < 0) ? 11 : currMonth - 1;
-            var isLeapYear = currYear % 4 === 0;
-
-            // check leap years
-            if(prevMonth === 1 && isLeapYear) {
-                return 29;
-            } else if(prevMonth === 1 && !isLeapYear) {
-                return 28;
-            }
-
-            return n_DaysInEachMonth[prevMonth];
-        }
-
-        /*
-            This function does not depend on the number of days in the previous month and calculates the data for the previous month as to prep the calendar to display it
-            @currDateObj : holds this month's information
-            @prevDateObj : will be holding previous month's information based
-                           on curr month's and is the target
-            @n_DaysInEachMonth : shallow-copy of original
-        */
-        function PrepPreviousMonthForDisplay(currDateObj, prevDateObj, n_DaysInEachMonth) {
-            var prevMonth = currDateObj.Month - 1;
-            if(prevMonth < 0) {
-                prevDateObj.Year = prevDateObj.Year - 1;
-                prevDateObj.Month = 11;
-                if(prevDateObj.Year % 4 === 0) {
-                    n_DaysInEachMonth[1] = 29;
-                }
-            } else {
-                prevDateObj.Month = prevMonth;
-            }
-
-            // Get (row, col) of last day of previous month
-            //      > row is calculated after the (row, col) of first day is known
-            var row2 = 2;
-            var col2 = currDateObj.FirstDayOfTheMonth.col - 1;
-            if(col2 < 1) {
-                col2 = 7;    // reset col
-            }
-
-            var n_DaysInPrevMonth = n_DaysInEachMonth[prevDateObj.Month];
-            console.log('col2:',col2);
-            console.log('n_DaysInPrevMonth:',n_DaysInPrevMonth);
-            var n_DaysLeftInPrevMonth = n_DaysInPrevMonth - col2;
-            console.log('n_DaysLeftInPrevMonth:',n_DaysLeftInPrevMonth);
-            for(var i = 0; n_DaysLeftInPrevMonth >= 7; ++i, ++row2) {
-                n_DaysLeftInPrevMonth = n_DaysLeftInPrevMonth - 7;
-                console.log('n_DaysLeftInPrevMonth:',n_DaysLeftInPrevMonth);
-            }
-
-            var row = 1;    // always 1st week of its month
-            var col = 7 - n_DaysLeftInPrevMonth + 1;
-
-            prevDateObj.FirstDayOfTheMonth.row = row;
-            prevDateObj.FirstDayOfTheMonth.col = col;
-
-            prevDateObj.LastDayOfTheMonth.row = row2;
-            prevDateObj.LastDayOfTheMonth.col = col2;
-
-            console.log('prevDateObj:', prevDateObj);
-            console.log('currDateObj:', currDateObj);
-        }
-
-        /*
-            accounts for leap year
-            @currYear : current Year
-            @n_DaysInEachMonth : number of days in each month relative to the year
-            @returns : number of days in next month
-        */
-        function n_DayInNextMonth(currYear, currMonth, n_DaysInEachMonth) {
-            var nextMonth = (currMonth + 1 > 11) ? 0 : currMonth + 1;
-            var isLeapYear = currYear % 4 === 0;
-
-            // check leap years
-            if(nextMonth === 1 && isLeapYear) {
-                return 29;
-            } else if(nextMonth === 1 && !isLeapYear) {
-                return 28;
-            }
-
-            return n_DaysInEachMonth[nextMonth];
-        }
-
-        /* 
-            This function does not depend on the number of days in the next month and calculates the data for the following month as to prep the calendar to display it
-            @currDateObj : holds this months information
-            @nextDateObj : will be holding next months information based on curr month's
-            @n_DaysInEachMonth : shallow-copy of original
-        */
-        function PrepNextMonthForDisplay(currDateObj, nextDateObj, n_DaysInEachMonth) {
-            var nextMonth = currDateObj.Month + 1;
-            if(nextMonth > 11) {
-                nextDateObj.Year += 1;
-                nextDateObj.Month = 0;
-                if(nextDateObj.Year % 4 === 0) {
-                    n_DaysInEachMonth[1] = 29;
-                }
-            } else {
-                nextDateObj.Month = nextMonth;
-            }
-
-            var row = 1;
-            var col = currDateObj.LastDayOfTheMonth.col + 1;
-            if(col > 7) {
-                col = 1;    // reset col
-            }
-
-            nextDateObj.FirstDayOfTheMonth.row = row;
-            nextDateObj.FirstDayOfTheMonth.col = col;
-
-            var n_DaysInNextMonth = n_DaysInEachMonth[nextDateObj.Month];
-            var n_DaysLeftInNextMonth = n_DaysInNextMonth;
-            var row2 = 1;
-            if(col !== 1) {
-                n_DaysLeftInNextMonth = n_DaysLeftInNextMonth - (7 - col - 1);
-                ++row2;
-            }
-
-            for(var i = 0; n_DaysLeftInNextMonth >= 7; ++i, ++row2) {
-                n_DaysLeftInNextMonth = n_DaysLeftInNextMonth - 7;
-            }
-
-            nextDateObj.LastDayOfTheMonth.col = n_DaysLeftInNextMonth;
-            nextDateObj.LastDayOfTheMonth.row = row2;
-        }
-
-        /*
-            @x_Today : represents the row number
-            @y_Today : represents the column number
-            @year : is the current year
-            @month : is the number of days in current month
-            @day : is the current day
-            @previousMonth : is the total number of days in the previous month
-            @nextMonth : is the total number of days in the next month
-        */
-        function PopulateCalendar(x_Today, y_Today, year, month, day, previousMonth, nextMonth) {
-            // calendar => grid(6, 7) => 6 rows, 7 columns
-            console.log('x_Today:', x_Today);
-            console.log('y_Today:', y_Today);
-            console.log('day:', day);
-            console.log('month:', month);
-            console.log('previousMonth:', previousMonth);
-            console.log('nextMonth:', nextMonth);
-
-            // total days away from calendar-grid(0,0) inclusive
-            var totalDaysFromOrigin = 7 * (x_Today - 1) + y_Today;
-            console.log('totalDaysFromOrigin:', totalDaysFromOrigin);
-
-            // total days that show from previous month in week 1 of current month
-            var totalDaysFromPrevMonth = totalDaysFromOrigin - day;
-            console.log('totalDaysFromPrevMonth:', totalDaysFromPrevMonth);
-
-            // start day of current month
-            var currMonthInitialCol = totalDaysFromPrevMonth + 1;
-            console.log('currMonthInitialCol:',currMonthInitialCol);
-            g_LocationOfFirstDayOfTodaysMonth.col = currMonthInitialCol;
-
-            // get (previous month's last day - totalDaysFromPrevMonth) number
-            var calendarOriginDay = previousMonth - totalDaysFromPrevMonth;
-            console.log('calendarOriginDay:',calendarOriginDay);
-
-            var nextMonthOriginDay = 1;
-
-            // Populate Calendar
-            var prevMonthDays = 1;
-            var currMonthDays = 1;
-            for(var row = 1; row < 7; ++row) {
-                for(var col = 1; col < 8; ++col, ++prevMonthDays) {
-                    var calendarCell = '.row_' + row + ' .col_' + col;
-                    var dayIterator = calendarCell + ' .dayNumberOfMonth';
-
-                    // prev month
-                    if(prevMonthDays <= totalDaysFromPrevMonth) {
-                        $(dayIterator).html(calendarOriginDay + col);
-                        $(calendarCell).addClass('previous-month');
-                    // next month    
-                    } else if(currMonthDays > month) {
-                        $(dayIterator).html(nextMonthOriginDay++);
-                        $(calendarCell).addClass('next-month');
-                    // curr month
-                    } else {
-                        if(currMonthDays === month) {
-                            g_LocationOfLastDayOfTodaysMonth.row = row;
-                            g_LocationOfLastDayOfTodaysMonth.col = col;
-                        }
-                        $(dayIterator).html(currMonthDays++);
-                    }
-                }
-            }
-        }
-
-        function PopulateNextMonth(previousMonthObj, focusedMonthObj) {
-            // if first day of the month of 'focusedMonthObj' is at (1,1) then disregard previousMonthObj
-            g_LocationOfFirstDayOfTodaysMonth.row = focusedMonthObj.FirstDayOfTheMonth.row;
-            g_LocationOfFirstDayOfTodaysMonth.col = focusedMonthObj.FirstDayOfTheMonth.col;
-
-            // assumed that it's not a leap year
-            // @n_DaysPerMonth is in reference to next month's year
-            var n_DaysPerMonth_NextMonthsYear = [
-                31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-            ];
-            console.log('focusedMonthObj.Year:>',focusedMonthObj.Year);
-            if(focusedMonthObj.Year % 4 === 0) { n_DaysPerMonth_NextMonthsYear[1] = 29; }
-            var n_DaysInFocusedMonth = n_DaysPerMonth_NextMonthsYear[focusedMonthObj.Month]
-
-            // for previous month dates that are displayed in first week
-            var prevMonthInitCol = previousMonthObj.LastDayOfTheMonth.col;
-            var n_DaysFromPreviousMonth = n_DaysPerMonth_NextMonthsYear[previousMonthObj.Month];
-            var calendarOriginDay = n_DaysFromPreviousMonth - previousMonthObj.LastDayOfTheMonth.col;
-            console.log('prevMonthInitCol:', prevMonthInitCol);
-            console.log('focusedMonthObj.FirstDayOfTheMonth.col:',focusedMonthObj.FirstDayOfTheMonth.col);
-
-            // check if month being displayed is the today's current month
-            var isCurrentMonth = false;
-            var d = new Date();
-            if(focusedMonthObj.Year === d.getFullYear() &&
-               focusedMonthObj.Month === d.getMonth()) {
-                isCurrentMonth = true;
-            }
-            //////////////////////////////////////////////////////////////
-
-            // Populate Calendar
-            var layDownPreviousMonthDays = 1;
-            var currMonthDays = 1;
-            var nextMonthOriginDay = 1;
-            for(var row = 1; row < 7; ++row) {
-                for(var col = 1; col < 8; ++col, ++layDownPreviousMonthDays) {
-                    var calendarCell = '.row_' + row + ' .col_' + col;
-                    var dayIterator = calendarCell + ' .dayNumberOfMonth';
-
-                    if(layDownPreviousMonthDays < focusedMonthObj.FirstDayOfTheMonth.col) {
-                        console.log('prevMonthInitCol:',prevMonthInitCol);
-                        console.log('focusedMonthObj.FirstDayOfTheMonth.col:',focusedMonthObj.FirstDayOfTheMonth.col);
-                        console.log('hi', calendarOriginDay + col);
-                        $(dayIterator).html(calendarOriginDay + col);
-                        $(calendarCell).addClass('previous-month');
-                    } else if(currMonthDays > n_DaysInFocusedMonth) {
-                        $(dayIterator).html(nextMonthOriginDay++);
-                        $(calendarCell).addClass('next-month');
-                    } else {
-                        if(currMonthDays === n_DaysInFocusedMonth) {
-                            g_LocationOfLastDayOfTodaysMonth.row = row;
-                            g_LocationOfLastDayOfTodaysMonth.col = col;
-                        }
-                        if(isCurrentMonth && d.getDate() === currMonthDays) {
-                            $(calendarCell).addClass('current-day');
-                        }
-                        $(dayIterator).html(currMonthDays++);
-                    }
-                }
-            }
-
-            g_DisplayedYear = focusedMonthObj.Year;
-            g_DisplayedMonth = focusedMonthObj.Month;
-
-            $('.header-day-of-the-week').html('');
-            $('.header-month').html(GetMonthString(focusedMonthObj.Month));
-            $('.header-day-number').html('');
-            $('.header-year').html(focusedMonthObj.Year);
-
-            if(isCurrentMonth) {
-                $('.header-day-of-the-week').html(g_DaysOfTheWeek[d.getDay()] + ',');
-                $('.header-day-number').html(d.getDate() + ',');
-            }
-
-            console.log('g_LocationOfFirstDayOfTodaysMonth',g_LocationOfFirstDayOfTodaysMonth);
-            console.log('g_LocationOfLastDayOfTodaysMonth',g_LocationOfLastDayOfTodaysMonth);
-        }
-
-        function PopulatePreviousMonth(focusedMonthObj, nextMonthObj) {
-            // if first day of the month of 'focusedMonthObj' is at (1,1) then disregard nextMonthObj
-            g_LocationOfFirstDayOfTodaysMonth.row = focusedMonthObj.FirstDayOfTheMonth.row;
-            g_LocationOfFirstDayOfTodaysMonth.col = focusedMonthObj.FirstDayOfTheMonth.col;
-
-            // assumed that it's not a leap year
-            var n_DaysPerMonth_PrevMonthsYear = [
-                31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-            ];
-            if(focusedMonthObj.Year % 4 === 0) { n_DaysPerMonth_PrevMonthsYear[1] = 29; }
-            var n_DaysInFocusedMonth = n_DaysPerMonth_PrevMonthsYear[focusedMonthObj.Month]
-
-            // for previous month dates that are displayed in first week
-            var nextMonthInitCol = nextMonthObj.LastDayOfTheMonth.col;
-            var prevMonthNumber = focusedMonthObj.Month - 1;
-            if(prevMonthNumber < 0) {
-                prevMonthNumber = 11;
-            }
-            var n_DaysInPrevMonth = n_DaysPerMonth_PrevMonthsYear[prevMonthNumber];
-            console.log('> n_DaysInPrevMonth:', n_DaysInPrevMonth);
-            var calendarOriginDay = n_DaysInPrevMonth - focusedMonthObj.FirstDayOfTheMonth.col + 1;
-            // console.log('nextMonthInitCol:', nextMonthInitCol);
-            console.log('focusedMonthObj.FirstDayOfTheMonth.col:',focusedMonthObj.FirstDayOfTheMonth.col);
-
-            // check if month being displayed is the today's current month
-            var isCurrentMonth = false;
-            var d = new Date();
-            if(focusedMonthObj.Year === d.getFullYear() &&
-               focusedMonthObj.Month === d.getMonth()) {
-                isCurrentMonth = true;
-            }
-            //////////////////////////////////////////////////////////////
-
-            // Populate Calendar HERE
-            var layDownPreviousMonthDays = 1;
-            var currMonthDays = 1;
-            var nextMonthOriginDay = 1;
-            for(var row = 1; row < 7; ++row) {
-                for(var col = 1; col < 8; ++col, ++layDownPreviousMonthDays) {
-                    var calendarCell = '.row_' + row + ' .col_' + col;
-                    var dayIterator = calendarCell + ' .dayNumberOfMonth';
-
-                    if(layDownPreviousMonthDays < focusedMonthObj.FirstDayOfTheMonth.col) {
-                        $(dayIterator).html(calendarOriginDay + col);
-                        $(calendarCell).addClass('previous-month');
-                    } else if(currMonthDays > n_DaysInFocusedMonth) {
-                        $(dayIterator).html(nextMonthOriginDay++);
-                        $(calendarCell).addClass('next-month');
-                    } else {
-                        if(currMonthDays === n_DaysInFocusedMonth) {
-                            g_LocationOfLastDayOfTodaysMonth.row = row;
-                            g_LocationOfLastDayOfTodaysMonth.col = col;
-                        }
-                        if(isCurrentMonth && d.getDate() === currMonthDays) {
-                            $(calendarCell).addClass('current-day');
-                        }
-                        $(dayIterator).html(currMonthDays++);
-                    }
-                }
-            }
-
-            g_DisplayedYear = focusedMonthObj.Year;
-            g_DisplayedMonth = focusedMonthObj.Month;
-
-            $('.header-day-of-the-week').html('');
-            $('.header-month').html(GetMonthString(focusedMonthObj.Month));
-            $('.header-day-number').html('');
-            $('.header-year').html(focusedMonthObj.Year);
-
-            if(isCurrentMonth) {
-                $('.header-day-of-the-week').html(g_DaysOfTheWeek[d.getDay()] + ',');
-                $('.header-day-number').html(d.getDate() + ',');
-            }
-
-            console.log('g_LocationOfFirstDayOfTodaysMonth',g_LocationOfFirstDayOfTodaysMonth);
-            console.log('g_LocationOfLastDayOfTodaysMonth',g_LocationOfLastDayOfTodaysMonth);
-        }
-
-        function DisplayNextMonth() {
-            var d = new Date();
-            var focusedMonthObj = {
-                'Year': g_DisplayedYear,
-                'Month': g_DisplayedMonth,
-                'Day': d.getDate(),
-                'FirstDayOfTheMonth': {
-                    'row': g_LocationOfFirstDayOfTodaysMonth.row,
-                    'col': g_LocationOfFirstDayOfTodaysMonth.col
-                },
-                'LastDayOfTheMonth': {
-                    'row': g_LocationOfLastDayOfTodaysMonth.row,
-                    'col': g_LocationOfLastDayOfTodaysMonth.col
-                }
-            }
-            
-            // Default - assumed Not in a Leap Year
-            var n_DaysInEachMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-
-            var prevMonthObj = {
-                'Year': g_DisplayedYear,
-                'Month': g_DisplayedMonth,
-                'Day': d.getDate(),
-                'FirstDayOfTheMonth': {
-                    'row': g_LocationOfFirstDayOfTodaysMonth.row,
-                    'col': g_LocationOfFirstDayOfTodaysMonth.col
-                },
-                'LastDayOfTheMonth': {
-                    'row': g_LocationOfLastDayOfTodaysMonth.row,
-                    'col': g_LocationOfLastDayOfTodaysMonth.col
-                }
-            };
-
-            // based on arg1 calculate next month's data into arg2
-            // @3rd argument - creates a shallow copy
-            PrepNextMonthForDisplay(focusedMonthObj, focusedMonthObj, n_DaysInEachMonth.slice(0));
-            ClearCalendar();    // reset calendar styles
-            PopulateNextMonth(prevMonthObj, focusedMonthObj);
-        }
-
-        function DisplayPreviousMonth() {
-            var d = new Date();
-            var focusedMonthObj = {
-                'Year': g_DisplayedYear,
-                'Month': g_DisplayedMonth,
-                'Day': d.getDate(),
-                'FirstDayOfTheMonth': {
-                    'row': g_LocationOfFirstDayOfTodaysMonth.row,
-                    'col': g_LocationOfFirstDayOfTodaysMonth.col
-                },
-                'LastDayOfTheMonth': {
-                    'row': g_LocationOfLastDayOfTodaysMonth.row,
-                    'col': g_LocationOfLastDayOfTodaysMonth.col
-                }
-            }
-
-            // Default - assumed Not in a Leap Year
-            var n_DaysInEachMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-
-            var nextMonthObj = {
-                'Year': g_DisplayedYear,
-                'Month': g_DisplayedMonth,
-                'Day': d.getDate(),
-                'FirstDayOfTheMonth': {
-                    'row': g_LocationOfFirstDayOfTodaysMonth.row,
-                    'col': g_LocationOfFirstDayOfTodaysMonth.col
-                },
-                'LastDayOfTheMonth': {
-                    'row': g_LocationOfLastDayOfTodaysMonth.row,
-                    'col': g_LocationOfLastDayOfTodaysMonth.col
-                }
-            };
-
-            // based on arg1 calculate next month's data into arg2
-            PrepPreviousMonthForDisplay(focusedMonthObj, focusedMonthObj, n_DaysInEachMonth.slice(0));
-            ClearCalendar();    // reset calendar styles
-            PopulatePreviousMonth(focusedMonthObj, nextMonthObj);
-        }
-
-        /*
-            Removes any styling in the calendar display including the days written
-            in the month
-        */
-        function ClearCalendar() {
+        function ClearMonth() {
             for(var row = 1; row < 7; ++row) {
                 for(var col = 1; col < 8; ++col) {
                     var calendarCell = '.row_' + row + ' .col_' + col;
@@ -1007,7 +444,263 @@
                     $(dayIterator).html('');
                 }
             }
+
+            $('.header-day-of-the-week').html('');
+            $('.header-day-number').html('');
+            $('.header-month').html('');
+            $('.header-year').html('');
         }
+
+        function BuildCurrentMonthObject(targetMonth, targetYear) {
+            console.log(
+                '\n----------------------------------------\n' +
+                'Target Month: '+targetMonth+'\n' +
+                'Target Year : '+targetYear+ '\n'
+            );
+
+            g_CurrMonthObj.month = targetMonth;
+            g_CurrMonthObj.year = targetYear;
+
+            if(targetYear % 4 === 0) {
+                g_DaysPerMonth_CurrYear[1] = 29;
+            } else {
+                g_DaysPerMonth_CurrYear[1] = 28;
+            }
+
+            // Calculate the location of the first day of this month
+            var n_DaysFromTheFirst = SumDaysWithinMonths(g_DaysPerMonth_CurrYear, g_ReferenceObj.month, targetMonth);
+            var n_YearsFromOrigin = SumDaysWithinYears(g_ReferenceObj.year, targetYear);
+            n_DaysFromTheFirst += n_YearsFromOrigin;
+
+            console.log('n_DaysFromTheFirst:>',n_DaysFromTheFirst);
+
+            // make the year's week begin on a Sunday
+            var n_DaysInAWeek = 7;
+            var totalDaysLeft = n_DaysFromTheFirst;
+            // total days left after subtracting offset from total days to date
+            totalDaysLeft = n_DaysFromTheFirst - g_ReferenceObj.offset;
+
+            var n_DaysIntoTheWeek = totalDaysLeft % n_DaysInAWeek;
+            g_CurrMonthObj.loc_FirstDay.r = 1;
+            g_CurrMonthObj.loc_FirstDay.c = n_DaysIntoTheWeek + 1;
+            console.log('First Day of the Month: (' + g_CurrMonthObj.loc_FirstDay.r + ', ' + g_CurrMonthObj.loc_FirstDay.c + ')');
+
+            var n_DaysInCurrMonth = g_DaysPerMonth_CurrYear[g_CurrMonthObj.month];
+            n_DaysInCurrMonth -= (n_DaysInAWeek - n_DaysIntoTheWeek);
+            // must add by 1, first week of the month is subtracted in previous line
+            var lastWeekNumber = Math.floor(n_DaysInCurrMonth / n_DaysInAWeek) + 1;
+            var n_DaysIntoLastWeek = n_DaysInCurrMonth % n_DaysInAWeek;
+            if(n_DaysIntoLastWeek === 0)
+                n_DaysIntoLastWeek = 7;
+
+            g_CurrMonthObj.loc_LastDay.r = lastWeekNumber;
+            g_CurrMonthObj.loc_LastDay.c = n_DaysIntoLastWeek;
+            console.log('Last Day of the Month: (' + g_CurrMonthObj.loc_LastDay.r + ', ' + g_CurrMonthObj.loc_LastDay.c + ')');
+        }
+
+        function BuildPreviousMonthObject() {
+            var lastDay = -1;
+            var prevYear = g_CurrMonthObj.year;
+            var prevMonth = g_CurrMonthObj.month - 1;
+            if(prevMonth < 0) {
+                --prevYear;
+                prevMonth = 11;
+                lastDay = g_DaysPerMonth_CurrYear[prevMonth];
+            } else if(prevMonth === 1 && g_CurrMonthObj.year % 4 === 0) {
+                lastDay = 29;
+            } else {
+                lastDay = g_DaysPerMonth_CurrYear[prevMonth];
+            }
+
+            g_CurrMonthObj.previousMonth.lastDay = lastDay;
+            g_CurrMonthObj.previousMonth.month = prevMonth;
+            g_CurrMonthObj.previousMonth.year = prevYear;
+
+            var lastDayRow = 1;
+            var lastDayCol = g_CurrMonthObj.loc_FirstDay.c - 1;
+
+            if(lastDayCol < 1) {
+                lastDayRow = 0;
+                lastDayCol = 0;
+            }
+
+            g_CurrMonthObj.previousMonth.loc_LastDay.r = lastDayRow;
+            g_CurrMonthObj.previousMonth.loc_LastDay.c = lastDayCol;
+
+            console.log('Previous Month:', g_CurrMonthObj.previousMonth);
+        }
+
+        /*
+            Purpose: Prepares the next month when user clicks on next-month-btn
+            Returns:
+        */
+        function PrepNextMonthObject() {
+            var nextYear = g_CurrMonthObj.year;
+            var nextMonth = g_CurrMonthObj.month + 1;
+            if(nextMonth > 11) {
+                nextMonth = 0;
+                ++nextYear;
+            }
+
+            BuildCurrentMonthObject(nextMonth, nextYear);
+            BuildPreviousMonthObject();
+        }
+
+        function PrepPreviousMonthObject() {
+            var prevYear = g_CurrMonthObj.year;
+            var prevMonth = g_CurrMonthObj.month - 1;
+            if(prevMonth < 0) {
+                prevMonth = 11;
+                --prevYear;
+            }
+
+            BuildCurrentMonthObject(prevMonth, prevYear);
+            BuildPreviousMonthObject();
+        }
+
+        /*
+            Purpose: Calculates today's date and the x,y position on the calendar
+            Returns: Updates the g_CurrMonthObj object
+        */
+        function CalculateTargetDate(targetDay, targetMonth) {
+            // Calculate the location of the first day of this month
+            var n_DaysFromTheFirst = SumDaysWithinMonths(g_DaysPerMonth_CurrYear, g_ReferenceObj.month, targetMonth);
+
+            // make the year's week begin on a Sunday
+            var n_DaysInAWeek = 7;
+            var totalDaysLeft = n_DaysFromTheFirst;
+            // total days left after subtracting offset from total days to date
+            if(g_ReferenceObj.offset !== 0)
+                totalDaysLeft = n_DaysFromTheFirst - g_ReferenceObj.offset;
+
+            // var totalWeeks = Math.floor(totalDaysLeft / n_DaysInAWeek);
+            var n_DaysIntoTheWeek = totalDaysLeft % n_DaysInAWeek;
+
+            var targetRow = Math.ceil(targetDay / n_DaysInAWeek);
+            var targetCol = targetDay - (n_DaysInAWeek - n_DaysIntoTheWeek);
+            targetCol %= n_DaysInAWeek
+            if(targetCol === 0)
+                targetCol = 7;
+
+            g_CurrMonthObj.loc_TargetDay.r = targetRow;
+            g_CurrMonthObj.loc_TargetDay.c = targetCol;
+
+            console.log('Target Day of the Month: (' + g_CurrMonthObj.loc_TargetDay.r + ', ' + g_CurrMonthObj.loc_TargetDay.c + ')');
+        }
+
+        function PopulateMonth() {
+            var max_rows = 7,
+                max_cols = 8;
+
+            var currMonth = g_DaysPerMonth_CurrYear[g_CurrMonthObj.month];
+            var prevMonth = g_CurrMonthObj.previousMonth.lastDay;
+            var lastDayCol = g_CurrMonthObj.previousMonth.loc_LastDay.c;
+            
+            var nextMonthIterator = 1;
+            var lastMonthIterator = prevMonth - lastDayCol + 1;
+            var currMonthIterator = 1;
+
+            for(var row = 1; row < max_rows; ++row) {
+                for(var col = 1; col < max_cols; ++col) {
+                    var calendarCell = '.row_' + row + ' .col_' + col;
+                    var dayIterator = calendarCell + ' .dayNumberOfMonth';
+
+                    if(lastMonthIterator <= prevMonth) {
+                        $(dayIterator).html(lastMonthIterator);
+                        $(calendarCell).addClass('previous-month');
+                        ++lastMonthIterator;
+                    } else if(currMonthIterator > currMonth) {
+                        $(dayIterator).html(nextMonthIterator);
+                        $(calendarCell).addClass('next-month');
+                        ++nextMonthIterator;
+                    } else {
+                        $(dayIterator).html(currMonthIterator);
+                        if(today.day === currMonthIterator &&
+                           today.month === g_CurrMonthObj.month &&
+                           today.year === g_CurrMonthObj.year) {
+                            $(calendarCell).addClass('current-day');
+                        }
+                        ++currMonthIterator;
+                    }
+                }
+            }
+        }
+
+        function DisplayNextMonth() {
+            ClearMonth();
+            PrepNextMonthObject();
+            PopulateMonth();
+
+            if(today.month === g_CurrMonthObj.month &&
+               today.year === g_CurrMonthObj.year) {
+                $('.header-day-of-the-week').html(g_DaysOfTheWeek[today.dayOfTheWeek-1]+',');
+                $('.header-day-number').html(today.day+',');
+            }
+
+            $('.header-month').html(g_MonthsOfTheYear[g_CurrMonthObj.month]);
+            $('.header-year').html(g_CurrMonthObj.year);
+        }
+
+        function DisplayPreviousMonth() {
+            ClearMonth();
+            PrepPreviousMonthObject();
+            PopulateMonth();
+
+            if(today.month === g_CurrMonthObj.month &&
+               today.year === g_CurrMonthObj.year) {
+                $('.header-day-of-the-week').html(g_DaysOfTheWeek[today.dayOfTheWeek-1]+',');
+                $('.header-day-number').html(today.day+',');
+            }
+
+            $('.header-month').html(g_MonthsOfTheYear[g_CurrMonthObj.month]);
+            $('.header-year').html(g_CurrMonthObj.year);
+        }
+
+        /*
+            from (first day of month 'a') to (last day of month 'b') where:
+            @monthsArr - the days/month array
+            @a - starting month - inclusive
+            @b - ending month - exclusive
+        */
+        function SumDaysWithinMonths(monthsArr, a, b) {
+            var sum = 0;
+            for(var i = a; i < b; ++i) {
+                sum += monthsArr[i];
+            }
+            return sum;
+        }
+
+        /*
+            Prupose: Sums the days between two years
+            @origin: Inclusive start year argument
+            @b     : Exclusive end year argument
+            Returns: Number - the amount of days between 2016 and b
+        */
+        function SumDaysWithinYears(origin, b) {
+            if(origin === b || origin - b === 1)
+                return 0;
+
+            var n_Days = 0;
+            for(var year = origin; year < b; ++year) {
+                if(year % 4 === 0)
+                    n_Days += 366;
+                else
+                    n_Days += 365;
+            }
+            return n_Days;
+        }
+
+        $(document).ready(function() {
+            BuildCurrentMonthObject(today.month, today.year);
+            CalculateTargetDate(today.day, today.month);
+            BuildPreviousMonthObject();
+            PopulateMonth();
+
+            $('.header-day-of-the-week').html(g_DaysOfTheWeek[today.dayOfTheWeek-1]+',');
+            $('.header-day-number').html(today.day+',');
+            $('.header-month').html(g_MonthsOfTheYear[g_CurrMonthObj.month]);
+            $('.header-year').html(g_CurrMonthObj.year);
+        });
 
         $('.next-month-btn').click(function() { DisplayNextMonth(); });
 
@@ -1017,11 +710,9 @@
             switch(e.which) {
                 case 37:        // left arrow key
                     DisplayPreviousMonth();
-                    console.log(666);
                     break;
                 case 39:        // right arrow key
                     DisplayNextMonth();
-                    console.log(999);
                     break;
                 default:        // no keyboard I'm guessing
                     return;     // exit this handler for other keys
